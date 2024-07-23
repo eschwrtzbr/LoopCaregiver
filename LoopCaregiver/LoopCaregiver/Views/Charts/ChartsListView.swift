@@ -6,6 +6,7 @@
 //
 
 import LoopCaregiverKit
+import LoopCaregiverKitUI
 import LoopKitUI
 import SwiftCharts
 import SwiftUI
@@ -41,7 +42,7 @@ struct ChartsListView: View {
             }
             ChartWrapperView(
                 title: "Active Insulin",
-                subtitle: formattedIOB(),
+                subtitle: remoteDataSource.currentIOB?.formattedIOB() ?? "",
                 hideLabels: $isInteractingWithActiveInsulinChart
             ) {
             }
@@ -57,7 +58,7 @@ struct ChartsListView: View {
                 )
             }
             .frame(maxHeight: 150.0)
-            ChartWrapperView(title: "Active Carbohydrates", subtitle: formattedCOB(), hideLabels: $isInteractingWithActiveCarbsChart) {
+            ChartWrapperView(title: "Active Carbohydrates", subtitle: remoteDataSource.currentCOB?.formattedCOB() ?? "", hideLabels: $isInteractingWithActiveCarbsChart) {
                 /*
                  if remoteDataSource.glucoseSamples.count > 0, remoteDataSource.predictedGlucose.count > 0 {
                  COBChartView(remoteDataSource: remoteDataSource,
@@ -79,7 +80,7 @@ struct ChartsListView: View {
                     // Using a custom "padding" solution here with an HStack to avoid this.
                     Spacer(minLength: 10.0)
                     NightscoutChartScrollView(
-                        settings: looperService.settings,
+                        settings: settings,
                         remoteDataSource: remoteDataSource
                     )
                     Spacer(minLength: 10.0)
@@ -98,38 +99,11 @@ struct ChartsListView: View {
     }
     
     func eventualGlucose() -> String {
-        guard remoteDataSource.predictedGlucose.last != nil else {
+        guard let eventualGlucose = remoteDataSource.predictedGlucose.last else {
             return ""
         }
         
-        return "Eventually \(settings.glucoseDisplayUnits.shortLocalizedUnitString(avoidLineBreaking: true))"
-    }
-    
-    func formattedCOB() -> String {
-        guard let cob = remoteDataSource.currentCOB?.cob else {
-            return ""
-        }
-        return String(format: "%.0f g", cob)
-    }
-    
-    func formattedIOB() -> String {
-        guard let iob = remoteDataSource.currentIOB?.iob else {
-            return ""
-        }
-        
-        var maxFractionalDigits = 0
-        if iob > 1 {
-            maxFractionalDigits = 1
-        } else {
-            maxFractionalDigits = 2
-        }
-        
-        let iobString = iob.formatted(
-            .number
-            .precision(.fractionLength(0...maxFractionalDigits))
-        )
-
-        return iobString + " U Total"
+        return "Eventually \(eventualGlucose.presentableStringValue(displayUnits: settings.glucoseDisplayUnits, includeShortUnits: true))"
     }
     
     func formattedInsulinDelivery() -> String {
